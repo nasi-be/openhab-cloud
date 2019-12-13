@@ -2,6 +2,7 @@ var User = require('../models/user');
 var Openhab = require('../models/openhab');
 var UserDevice = require('../models/userdevice');
 var logger = require('../logger');
+var UserPassword = require('../userpassword');
 var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 var ObjectId = mongoose.SchemaTypes.ObjectId;
@@ -59,14 +60,19 @@ exports.usersaddpost = function(req, res) {
     if (!req.form.isValid) {
         res.redirect('/users/add');
     } else {
-        if (req.body.password == req.body.password1) {
-            User.findOne({username: req.body.username}, function(error, checkUser) {
+        if (req.form.password == req.form.password1) {
+            if (!UserPassword.isComplexEnough(req.form.password)) {
+                UserPassword.printPasswordNotComplexEnoughError(req);
+                res.redirect('/users/add');
+                return;
+            }
+            User.findOne({username: req.form.username}, function(error, checkUser) {
                 if (!error) {
                     if (checkUser) {
                         req.flash('error', 'This username already exists');
                         res.redirect('/users/add');
                     } else {
-                        User.registerToAccount(req.body.username, req.body.password, req.user.account, req.body.role, function(error, newUser) {
+                        User.registerToAccount(req.form.username, req.form.password, req.user.account, req.form.role, function(error, newUser) {
                             if (!error) {
                                 req.flash('info', 'User was added successfully');
                                 res.redirect('/users');

@@ -1,33 +1,33 @@
-var config = require('./config.json');
+var config = require('./config.json'),
+    mongoose = require('mongoose'),
+    uuid = require('uuid'),
+    mongooseTypes = require('mongoose-types'),
+    Invitation = require('./models/invitation'),
+    system = require('./system'),
+    MongoConnect = require('./system/mongoconnect'),
+    mongoConnect;
 
-// MongoDB connection
-var mongoose = require('mongoose');
-var uuid = require('uuid');
-mongoose.connect('mongodb://' + config.mongodb.user + ':' + config.mongodb.password + '@' + config.mongodb.hosts[0] + '/openhab');
-var mongooseTypes = require("mongoose-types");
+system.setConfiguration(config);
+mongoConnect = new MongoConnect(system);
+mongoConnect.connect(mongoose);
 mongooseTypes.loadTypes(mongoose);
 
-// Mongoose models
-var User = require('./models/user');
-var Openhab = require('./models/openhab');
-var Event = require('./models/event');
-var Invitation = require('./models/invitation');
-
-console.log("Making 10 invitations!");
+console.log('Making 10 invitations!');
 for (i=0; i<10; i++) {
+    var invitationCode,
+        invite;
+
     invitationCode = uuid.v1();
-    invite = new Invitation({code: invitationCode, email: "openhab@openhab.org"});
-    console.log("openHAB-cloud: New invitation code " + invitationCode);
-    invite.save(function(err, invitation) {
-        console.log("callback");
+    invite = new Invitation({code: invitationCode, email: 'openhab@openhab.org'});
+    console.log('openHAB-cloud: New invitation code ' + invitationCode);
+    invite.save(function (err, invitation) {
+        console.log('callback');
         if (err) {
-            console.log("Error");
+            console.log('Error');
         } else {
-            console.log("Saved: " + invitation);
+            console.log('Saved: ' + invitation);
         }
     });
 }
 
-//mongoose.disconnect();
-console.log("Complete!");
-//process.exit();
+console.log('Complete!');

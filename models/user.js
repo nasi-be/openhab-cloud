@@ -53,7 +53,7 @@ UserSchema.static('register', function(username, password, cb) {
     newAccount.save(function(error) {
         if (!error) {
             var user = new self();
-            user.username = username.trim().toLowerCase();
+            user.username = username.trim();
             user.password = password;
             user.role = 'master';
             user.account = newAccount.id;
@@ -86,7 +86,9 @@ UserSchema.static('registerToAccount', function(username, password, account, rol
 });
 
 UserSchema.static('authenticate', function (username, password, callback) {
-    this.findOne({ username: username }).cache().exec(function(err, user) {
+    // don't use cache() here, before a proper way to invalidate the cache when, e.g., the password is changed is
+    // implemented. See also: https://github.com/Gottox/mongoose-cache/issues/17  
+	this.findOne({ username: username.toLowerCase() }).exec(function(err, user) {
         if (err)
             return callback(err, false, {message: 'Authentication error'});
         if (!user)
@@ -104,7 +106,7 @@ UserSchema.static('authenticate', function (username, password, callback) {
 });
 
 UserSchema.methods.openhab = function(callback) {
-    Openhab.findOne({account: this.account}).cache().exec(callback);
+    Openhab.findOne({account: this.account}).exec(callback);
 }
 
 UserSchema.index({account:1, role:1});

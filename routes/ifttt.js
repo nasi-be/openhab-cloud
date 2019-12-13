@@ -7,6 +7,7 @@ var Openhab = require('../models/openhab');
 var Item = require('../models/item');
 var Event = require('../models/event');
 var app = require('../app');
+var system = require('../system');
 
 // IFTTT openHAB channel key
 var iftttChannelKey = app.config.ifttt.iftttChannelKey
@@ -53,7 +54,7 @@ function iftttAuthenticate (req, res, next) {
 exports.userinfo = [
     iftttAuthenticate,
     function(req, res){
-        res.json({data: {name: req.user.username, id: req.user._id, url: "https://" + app.config.system.baseurl + "/account"}});
+        res.json({data: {name: req.user.username, id: req.user._id, url: system.getBaseURL() + "/account"}});
     }
 ]
 
@@ -129,6 +130,10 @@ exports.v1actioncommand = [
             // If we can't find user's openHAB or request doesnt have action fields in body we can't serve this
             if (error || !openhab) {
                 return res.status(400).json({errors: [{message: "Request failed"}]});
+            }
+            // If OH lives on another server, redirect to that internally (nginx)
+            if (openhab.serverAddress != system.getInternalAddress()){
+              return res.redirect(302, 'http://' + openhab.serverAddress + req.path);
             }
             app.sio.sockets.in(openhab.uuid).emit('command', {item: req.body.actionFields.item, command: req.body.actionFields.command});
             return res.json({data:[{id: "12345"}]});

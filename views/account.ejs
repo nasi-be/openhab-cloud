@@ -33,7 +33,7 @@
                     <label for="openhabuuid">openHAB UUID</label>
                     <input id="openhabuuid" type="text" name="openhabuuid" value="<%= openhab.uuid %>">
                     <label for="openhabsecret">openHAB Secret</label>
-                    <input id="openhabsecret" type="text" name="openhabsecret" value="<%= openhab.secret %>">
+                    <input id="openhabsecret" type="password" name="openhabsecret" value="<%= openhab.secret %>">
                     <button name="submit" type="submit" class="btn" id="submit">Update</button>
                 </form>
                 <div id="message"></div>
@@ -42,6 +42,8 @@
             <div class="span6">
                 <form method="post" action="/accountpassword" id="contactform">
                     <input type="hidden" name="_csrf" value="<%= token %>">
+                    <label for="oldpassword">Old password</label>
+                    <input id="oldpassword" name="oldpassword" type="password">
                     <label for="password">New password</label>
                     <input id="password" type="password" name="password">
                     <label for="password1">Re-type new password</label>

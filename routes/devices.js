@@ -6,12 +6,12 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 var ObjectId = mongoose.SchemaTypes.ObjectId;
 var UserDeviceLocationHistory = require('../models/userdevicelocationhistory');
-var gcm = require('node-gcm');
-var gcmSender = require('../gcmsender.js')
-    , appleSender = require('../aps-helper');
+var appleSender = require('../notificationsender/aps-helper');
+var firebase = require('../notificationsender/firebase');
 var redis = require('../redis-helper');
 var form = require('express-form'),
-    field = form.field;
+    field = form.field,
+    system = require('../system');
 
 exports.devicesget = function(req, res) {
     UserDevice.find({owner: req.user.id}, function(error, userDevices) {
@@ -39,6 +39,7 @@ exports.devicesget = function(req, res) {
             res.render('devices', { userDevices: userDevices,
                 title: "Devices", user: req.user, selectedDeviceId: selectedDeviceId,
                 selectedDeviceArrayId: selectedDeviceArrayId, locationHistory: locationHistory,
+                baseUrl: system.getBaseURL(), appleLink: system.getAppleLink(), androidLink: system.getAndroidLink(),
                 errormessages:req.flash('error'), infomessages:req.flash('info') });
         });
     });
@@ -56,15 +57,14 @@ exports.devicessendmessage = function(req, res) {
     } else {
         logger.info("openHAB-cloud: sending message to device " + req.params.id);
         var sendMessageDeviceId = mongoose.Types.ObjectId(req.params.id);
-        var message = req.body.messagetext;
+        var message = req.form.messagetext;
         UserDevice.findOne({owner: req.user.id, _id: sendMessageDeviceId}, function (error, sendMessageDevice) {
             if (!error && sendMessageDevice) {
                 if (sendMessageDevice.deviceType == 'ios') {
                     appleSender.sendAppleNotification(sendMessageDevice.iosDeviceToken, message);
-                } else if (sendMessageDevice.deviceType == 'android') {
-                    sendAndroidNotification(sendMessageDevice.androidRegistration, message);
-                } else {
-
+                }
+                if (sendMessageDevice.deviceType == 'android') {
+                    firebase.sendMessageNotification(sendMessageDevice.androidRegistration, message);
                 }
                 req.flash('info', 'Your message was sent');
                 res.redirect('/devices/' + sendMessageDevice._id);
@@ -81,29 +81,8 @@ exports.devicesdelete = function(req, res) {
     var deleteId = mongoose.Types.ObjectId(req.params.id);
     UserDevice.findOne({owner: req.user.id, _id: deleteId}, function(error, userDevice) {
         if (!error && userDevice) {
-//            logger.info("found device");
             userDevice.remove();
         }
         res.redirect('/devices');
     });
-}
-
-function sendAndroidNotification(registrationId, message) {
-    redis.incr("androidNotificationId", function(error, androidNotificationId) {
-        if (!error) {
-            var gcmMessage = new gcm.Message({
-                delayWhileIdle: false,
-                data: {
-                    type: 'notification',
-                    notificationId: androidNotificationId,
-                    message: message
-                }
-            });
-            gcmSender.send(gcmMessage, [registrationId], 4, function (err, result) {
-                if (err) {
-                    logger.error("openHAB-cloud: GCM send error: " + err);
-                }
-            });
-        }
-    });
-}
+};

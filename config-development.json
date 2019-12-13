@@ -1,16 +1,21 @@
 {
     "system": {
-    	"baseurl": "<your-openhab-cloud-host>:443",
-        "logging": "debug"
+        "host": "<your-openhab-cloud-host>",
+        "port": "443",
+        "protocol": "https",
+        "logger" : {
+            "dir": "./logs",
+            "maxFiles" : "7d",
+            "level" : "debug",
+            "morganOption" : "dev"
+          }
     },
     "express":{
       "key" : "some express key"
     },
     "mongodb": {
         "hosts": ["127.0.0.1"],
-        "db": "openhab",
-        "user": "",
-        "password": ""
+        "db": "openhab"
     },
     "redis": {
         "host": "127.0.0.1",

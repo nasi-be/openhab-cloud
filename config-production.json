@@ -1,8 +1,16 @@
 {
     "system": {
-      "baseurl": "<your-openhab-cloud-host>:443",
-      "logging": "info",
-      "subDomainCookies": false
+      "host": "<your-openhab-cloud-host>",
+      "port": "443",
+      "protocol": "https",
+      "logger" : {
+        "dir": "./logs",
+        "maxFiles" : "7d",
+        "level" : "debug",
+        "morganOption" : null
+      },
+      "subDomainCookies": false,
+      "muteNotifications": false
     },
     "express":{
       "key" : "some express key"
